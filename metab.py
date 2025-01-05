@@ -5,8 +5,12 @@ Created on Sat Jan  4 11:51:23 2025
 @author: Yalin
 """
 
+'''
+Modular Encapsulated Two-stage Anaerobic Biological (METAB)
+'''
+
 # =============================================================================
-# Modular Encapsulated Two-stage Anaerobic Biological (METAB)
+# Load module
 # =============================================================================
 
 from exposan.metab import create_system
@@ -21,18 +25,93 @@ sys = create_system(
     )
 
 sys.simulate(state_reset_hook='reset_cache', t_span=(0,200), method='BDF')
-gases = [i for i in sys.products if i.price]
-mixed_gas = gases[0].copy('mixed_gas')
-mixed_gas.mix_from(gases)
-
 tea = sys.TEA
-table = tea.get_cashflow_table()
-product = mixed_gas
-quantity = product.F_mass*sys.operating_hours
-price = product.price = tea.solve_price(gases)
-tax = price*sum(table['Tax [MM$]'])/sum(quantity/tea.sales*table['Sales [MM$]'])
 
-tea.finance_fraction = 0.6
-tea.finance_interest = 0.08
-tea.finance_years = 10
-price = product.price = tea.solve_price(gases)
+products = [i for i in sys.products if i.price]
+product = products[0].copy('product')
+product.mix_from(products)
+get_quantity = lambda: product.F_mass*sys.operating_hours
+
+def get_MSP():
+    global MSP, table
+    MSP = tea.solve_price(products)
+    for i in products: i.price = MSP
+    table = tea.get_cashflow_table()
+    return MSP
+
+def get_tax():
+    tax = get_MSP()*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
+    return tax
+
+default_kwargs = {
+    'income_tax': tea.income_tax, # 0
+    'finance_fraction': tea.finance_fraction, # 0
+    'IRR': tea.IRR, # 0.05
+    'finance_interest': tea.finance_interest, # 0
+    'finance_years': tea.finance_years, # 0
+    }
+
+def reset_tea():
+    for k, v in default_kwargs.items(): setattr(tea, k, v)
+    print(f'\nDefault MSP is {get_MSP()}.')
+
+reset_tea()
+# Default MSP is 9.145709189106421.
+
+# %%
+
+# =============================================================================
+# Finance interest vs. IRR
+# =============================================================================
+
+def print_results():
+    print(f'IRR={tea.IRR}, finance_interest={tea.finance_interest}, MSP is {get_MSP()}.')
+
+interest = 0.1
+
+reset_tea()
+tea.income_tax = 0
+print(f'\nWhen income tax is {tea.income_tax}:')
+
+finance_kwargs = {
+    'finance_fraction': 1,
+    'IRR': 0,
+    'finance_interest': interest,
+    'finance_years': 30,
+    }
+for k, v in finance_kwargs.items(): setattr(tea, k, v)
+print_results()
+
+IRR_kwargs = {
+    'finance_fraction': 0,
+    'IRR': interest,
+    'finance_interest': 0,
+    'finance_years': 0,
+    }
+for k, v in IRR_kwargs.items(): setattr(tea, k, v)
+print_results()
+
+reset_tea()
+tea.income_tax = 0.35
+print(f'\nWhen income tax is {tea.income_tax}:')
+
+for k, v in finance_kwargs.items(): setattr(tea, k, v)
+print_results()
+
+for k, v in IRR_kwargs.items(): setattr(tea, k, v)
+print_results()
+
+interest = finance_kwargs['finance_interest'] = IRR_kwargs['IRR'] = 0.2
+tea.income_tax = 0
+print(f'\nWhen income tax is {tea.income_tax}:')
+for k, v in finance_kwargs.items(): setattr(tea, k, v)
+print_results()
+for k, v in IRR_kwargs.items(): setattr(tea, k, v)
+print_results()
+
+tea.income_tax = 0.35
+print(f'\nWhen income tax is {tea.income_tax}:')
+for k, v in finance_kwargs.items(): setattr(tea, k, v)
+print_results()
+for k, v in IRR_kwargs.items(): setattr(tea, k, v)
+print_results()
