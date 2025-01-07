@@ -35,7 +35,7 @@ get_quantity = lambda: product.F_mass*sys.operating_hours
 def get_MSP():
     global MSP, table
     MSP = tea.solve_price(products)
-    for i in products: i.price = MSP
+    for i in (*products, product): i.price = MSP
     table = tea.get_cashflow_table()
     return MSP
 
@@ -44,11 +44,13 @@ def get_tax():
     return tax
 
 default_kwargs = {
-    'income_tax': tea.income_tax, # 0
-    'finance_fraction': tea.finance_fraction, # 0
-    'IRR': tea.IRR, # 0.05
-    'finance_interest': tea.finance_interest, # 0
-    'finance_years': tea.finance_years, # 0
+    '_years': 30,
+    '_duration': (tea._start, tea._start+30),
+    'income_tax': 0,
+    'finance_fraction': 0,
+    'IRR': 0.05,
+    'finance_interest': 0,
+    'finance_years': 0,
     }
 
 def reset_tea():
@@ -58,19 +60,19 @@ def reset_tea():
 reset_tea()
 # Default MSP is 9.145709189106421.
 
-# %%
+#%%
 
 # =============================================================================
 # Finance interest vs. IRR
 # =============================================================================
 
-def print_results():
+def print_financial_results():
     print(f'IRR={tea.IRR}, finance_interest={tea.finance_interest}, MSP is {get_MSP()}.')
 
 interest = 0.1
 
 reset_tea()
-tea.income_tax = 0
+tea.income_tax = 0.35
 print(f'\nWhen income tax is {tea.income_tax}:')
 
 finance_kwargs = {
@@ -80,7 +82,7 @@ finance_kwargs = {
     'finance_years': 30,
     }
 for k, v in finance_kwargs.items(): setattr(tea, k, v)
-print_results()
+print_financial_results()
 
 IRR_kwargs = {
     'finance_fraction': 0,
@@ -89,29 +91,29 @@ IRR_kwargs = {
     'finance_years': 0,
     }
 for k, v in IRR_kwargs.items(): setattr(tea, k, v)
-print_results()
+print_financial_results()
 
 reset_tea()
-tea.income_tax = 0.35
+tea.income_tax = 0
 print(f'\nWhen income tax is {tea.income_tax}:')
 
 for k, v in finance_kwargs.items(): setattr(tea, k, v)
-print_results()
+print_financial_results()
 
 for k, v in IRR_kwargs.items(): setattr(tea, k, v)
-print_results()
+print_financial_results()
 
 interest = finance_kwargs['finance_interest'] = IRR_kwargs['IRR'] = 0.2
+tea.income_tax = 0.35
+print(f'\nWhen income tax is {tea.income_tax}:')
+for k, v in finance_kwargs.items(): setattr(tea, k, v)
+print_financial_results()
+for k, v in IRR_kwargs.items(): setattr(tea, k, v)
+print_financial_results()
+
 tea.income_tax = 0
 print(f'\nWhen income tax is {tea.income_tax}:')
 for k, v in finance_kwargs.items(): setattr(tea, k, v)
-print_results()
+print_financial_results()
 for k, v in IRR_kwargs.items(): setattr(tea, k, v)
-print_results()
-
-tea.income_tax = 0.35
-print(f'\nWhen income tax is {tea.income_tax}:')
-for k, v in finance_kwargs.items(): setattr(tea, k, v)
-print_results()
-for k, v in IRR_kwargs.items(): setattr(tea, k, v)
-print_results()
+print_financial_results()
