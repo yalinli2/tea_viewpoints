@@ -23,15 +23,15 @@ product = products[0].copy('product')
 product.mix_from(products)
 get_quantity = lambda: product.F_mass*sys.operating_hours
 
-def get_MSP():
-    global MSP, table
+def get_MSP(tea=tea):
+    global MSP
     MSP = tea.solve_price(products)
     for i in (*products, product): i.price = MSP
-    table = tea.get_cashflow_table()
     return MSP
 
-def get_tax():
-    tax = get_MSP()*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
+def get_tax(tea=tea):
+    table = tea.get_cashflow_table()
+    tax = get_MSP(tea)*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
     return tax
 
 default_kwargs = {
@@ -57,14 +57,17 @@ default_kwargs = {
     'finance_years': 10,
     }
 
-def reset_tea():
+def reset_tea(tea=tea):
     global default_MSP
     for k, v in default_kwargs.items(): setattr(tea, k, v)
-    default_MSP = get_MSP()
+    default_MSP = get_MSP(tea)
     print(f'\nDefault MSP is {default_MSP}.')
 
 reset_tea()
 # Default MSP is 0.6842768710140141.
+
+table = tea.get_cashflow_table()
+table.to_clipboard()
 
 
 #%%
@@ -332,3 +335,41 @@ print_financial_results()
 tea.construction_schedule = [1]
 tea.WC_over_FCI = 0
 cs.BT.equipment_lifetime.clear()
+
+
+#%%
+
+# Incentives
+from tea_viewpoints.incentives_tea import IncentivesTEA
+from biorefineries.tea import create_cellulosic_ethanol_tea
+        
+incentive_tea = create_cellulosic_ethanol_tea(sys, OSBL_units=tea.OSBL_units, cls=IncentivesTEA)
+incentive_tea.product = product
+
+def print_incentive_tea(tea=incentive_tea):
+    print(f'MSP with {tea.incentive_mechanism} of ${tea.unit_incentive}/kg is {get_MSP(tea)}.')
+#%%
+# No incentives
+print_incentive_tea()
+no_incentive_table = incentive_tea.get_cashflow_table()
+no_incentive_table.to_clipboard()
+
+# $0.1/kg as tax vs. as income
+incentive_tea.unit_incentive = 0.1
+incentive_tea.incentive_mechanism = 'non-refundable tax'
+print_incentive_tea()
+# MSP with non-refundable tax of $0.1/kg is 0.6669518862105264.
+non_refundable_tax_table_01 = incentive_tea.get_cashflow_table()
+non_refundable_tax_table_01.to_clipboard()
+
+incentive_tea.incentive_mechanism = 'income'
+print_incentive_tea()
+# MSP with income of $0.1/kg is 0.5842769081182757.
+income_table_01 = incentive_tea.get_cashflow_table()
+income_table_01.to_clipboard()
+
+incentive_tea.incentive_mechanism = 'refundable tax'
+print_incentive_tea()
+# MSP with refundable tax of $0.1/kg is 0.5668394962310324.
+refundable_tax_table_01 = incentive_tea.get_cashflow_table()
+refundable_tax_table_01.to_clipboard()

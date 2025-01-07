@@ -23,15 +23,15 @@ product = products[0].copy('product')
 product.mix_from(products)
 get_quantity = lambda: product.F_mass*sys.operating_hours
 
-def get_MSP():
-    global MSP, table
+def get_MSP(tea=tea):
+    global MSP
     MSP = tea.solve_price(products)
     for i in (*products, product): i.price = MSP
-    table = tea.get_cashflow_table()
     return MSP
 
-def get_tax():
-    tax = get_MSP()*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
+def get_tax(tea=tea):
+    table = tea.get_cashflow_table()
+    tax = get_MSP(tea)*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
     return tax
 
 default_kwargs = {
@@ -44,7 +44,7 @@ default_kwargs = {
     'finance_years': 10,
     }
 
-def reset_tea():
+def reset_tea(tea=tea):
     for k, v in default_kwargs.items(): setattr(tea, k, v)
     print(f'\nDefault MSP is {get_MSP()}.')
 
