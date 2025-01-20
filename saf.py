@@ -34,9 +34,8 @@ def get_tax(tea=tea):
     tax = get_MSP(tea)*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
     return tax
 
-default_kwargs = {
+baseline_kwargs = {
     '_years': 30,
-    '_duration': (tea._start, tea._start+30),
     'income_tax': 0.21,
     'finance_fraction': 0.6,
     'IRR': 0.1,
@@ -45,11 +44,13 @@ default_kwargs = {
     }
 
 def reset_tea(tea=tea):
-    for k, v in default_kwargs.items(): setattr(tea, k, v)
-    print(f'\nDefault MSP is {get_MSP()}.')
+    for k, v in baseline_kwargs.items(): setattr(tea, k, v)
+    global baseline_MSP
+    baseline_MSP = get_MSP(tea)
+    print(f'\nBaseline MSP is {baseline_MSP}.')
 
 reset_tea()
-# Default MSP is 4.343428601986846.
+# Baseline MSP is 4.343428601986846.
 
 
 #%%
@@ -63,8 +64,8 @@ reset_tea()
 # Tipping: EREF Analysis of MSW Landfill Tipping Fees — 2023
 # Table 3. Average MSW Landfill Tip Fees, by Region
 
-default_tipping_fee = -0.04226536872736153 # $39.7/wet tonne
-default_electricity_price = 0.06852856268796911
+baseline_tipping_fee = -0.04226536872736153 # $39.7/wet tonne
+baseline_electricity_price = 0.06852856268796911
 
 import qsdsan as qs
 feedstock = saf.feedstock
@@ -74,16 +75,16 @@ def refresh_electricity():
         if i.power_utility.rate:
             i.simulate()
 
-feedstock.price = default_tipping_fee
-qs.PowerUtility.price = default_electricity_price
-print(f'\nDefault MSP is {get_MSP()}.')
+feedstock.price = baseline_tipping_fee
+qs.PowerUtility.price = baseline_electricity_price
+print(f'\nBaseline MSP is {get_MSP()}.')
 # 4.343428601986847.
 
 saf.get_MFSP(sys)
 # 12.003883977302296
 #%%
 # National average
-feedstock.price = default_tipping_fee*56.8/(39.7/0.907185)
+feedstock.price = baseline_tipping_fee*56.8/(39.7/0.907185)
 qs.PowerUtility.price = 0.0821
 refresh_electricity()
 print(f'National avg MSP is {get_MSP()}.')
@@ -92,8 +93,8 @@ saf.get_MFSP(sys)
 # 11.975300973587867
 
 # California
-feedstock.price = default_tipping_fee*(71.73-21.39)/(39.7/0.907185)
-# feedstock.price = default_tipping_fee*71.73/(39.7/0.907185)
+feedstock.price = baseline_tipping_fee*(71.73-21.39)/(39.7/0.907185)
+# feedstock.price = baseline_tipping_fee*71.73/(39.7/0.907185)
 qs.PowerUtility.price = 0.2392
 refresh_electricity()
 print(f'California least favorable MSP is {get_MSP()}.')
@@ -104,8 +105,8 @@ saf.get_MFSP(sys)
 # 15.819205635972079
 
 # Pennsylvania
-feedstock.price = default_tipping_fee*(92.08+26.02)/(39.7/0.907185)
-# feedstock.price = default_tipping_fee*92.08/(39.7/0.907185)
+feedstock.price = baseline_tipping_fee*(92.08+26.02)/(39.7/0.907185)
+# feedstock.price = baseline_tipping_fee*92.08/(39.7/0.907185)
 qs.PowerUtility.price = 0.073
 refresh_electricity()
 print(f'Pennsylvania most favorable MSP is {get_MSP()}.')

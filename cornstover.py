@@ -34,7 +34,7 @@ def get_tax(tea=tea):
     tax = get_MSP(tea)*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
     return tax
 
-default_kwargs = {
+baseline_kwargs = {
     '_years': 30,
     '_duration': (2007, 2037),
     'construction_schedule': [0.08, 0.6 , 0.32],
@@ -58,13 +58,13 @@ default_kwargs = {
     }
 
 def reset_tea(tea=tea):
-    global default_MSP
-    for k, v in default_kwargs.items(): setattr(tea, k, v)
-    default_MSP = get_MSP(tea)
-    print(f'\nDefault MSP is {default_MSP}.')
+    for k, v in baseline_kwargs.items(): setattr(tea, k, v)
+    global baseline_MSP
+    baseline_MSP = get_MSP(tea)
+    print(f'\nBaseline MSP is {baseline_MSP}.')
 
 reset_tea()
-# Default MSP is 0.6842768710140141.
+# Baseline MSP is 0.6842768710140141.
 
 table = tea.get_cashflow_table()
 table.to_clipboard()
@@ -77,76 +77,76 @@ table.to_clipboard()
 # =============================================================================
 
 cornstover, cellulase = cs.cornstover, cs.cellulase
-default_cornstover_price = 0.05158816935126135
-default_cellulase_price = 0.212
-cornstover.price = default_cornstover_price*2
-cellulase.price = default_cornstover_price*2
+baseline_cornstover_price = 0.05158816935126135
+baseline_cellulase_price = 0.212
+cornstover.price = baseline_cornstover_price*2
+cellulase.price = baseline_cornstover_price*2
 print(f'Double corn stover and cellulase price MSP is {get_MSP()}.')
 # 1.0537098171440684.
 
-cornstover.price = default_cornstover_price/2
-cellulase.price = default_cornstover_price/2
+cornstover.price = baseline_cornstover_price/2
+cellulase.price = baseline_cornstover_price/2
 print(f'Half corn stover and cellulase price MSP is {get_MSP()}.')
 # 0.49955993418467054.
 
-cornstover.price = default_cornstover_price
-cellulase.price = default_cellulase_price
-print(f'Default MSP is {get_MSP()}.')
+cornstover.price = baseline_cornstover_price
+cellulase.price = baseline_cellulase_price
+print(f'Baseline MSP is {get_MSP()}.')
 
 R201, R303 = cs.R201, cs.R303
-default_xylan_to_xylose = 0.9
-default_glucan_to_glucose = 0.9
-R201.xylan_to_xylose.X = default_xylan_to_xylose/2
-R303.saccharification[2].X = default_xylan_to_xylose/2
+baseline_xylan_to_xylose = 0.9
+baseline_glucan_to_glucose = 0.9
+R201.xylan_to_xylose.X = baseline_xylan_to_xylose/2
+R303.saccharification[2].X = baseline_xylan_to_xylose/2
 sys.simulate()
 print(f'Half glucan and xylan saccharification MSP is {get_MSP()}.')
 # 1.017775410721592.
 
 # Cannot double saccharification as it's already near 100%.
 
-R201.xylan_to_xylose.X = default_xylan_to_xylose
-R303.saccharification[2].X = default_glucan_to_glucose
+R201.xylan_to_xylose.X = baseline_xylan_to_xylose
+R303.saccharification[2].X = baseline_glucan_to_glucose
 
-default_glucose_to_ethanol = 0.95
-default_xylose_to_ethanol = 0.85
-R303.cofermentation[0].X = default_glucose_to_ethanol/2
-R303.cofermentation[4].X = default_xylose_to_ethanol/2
+baseline_glucose_to_ethanol = 0.95
+baseline_xylose_to_ethanol = 0.85
+R303.cofermentation[0].X = baseline_glucose_to_ethanol/2
+R303.cofermentation[4].X = baseline_xylose_to_ethanol/2
 sys.simulate()
 print(f'Half glucose and xylose ethanol yield MSP is {get_MSP()}.')
 # 1.008837960461515.
 
-R303.cofermentation[0].X = default_glucose_to_ethanol
-R303.cofermentation[4].X = default_xylose_to_ethanol
+R303.cofermentation[0].X = baseline_glucose_to_ethanol
+R303.cofermentation[4].X = baseline_xylose_to_ethanol
 sys.simulate()
-print(f'Default MSP is {get_MSP()}.')
+print(f'Baseline MSP is {get_MSP()}.')
 
 
 #%%
 
 # =============================================================================
-# System size
+# Plant size
 # =============================================================================
 
 import numpy as np, pandas as pd
 
 feedstock = cs.cornstover
-default_feedstock_flowrate = 104229.16
+baseline_feedstock_flowrate = 104229.16
 size_ratios = [round(i, 1) for i in np.arange(0.1, 2.1, 0.1)]
 
 def evaluate_across_size_ratios(size_ratios=size_ratios):    
     size_MSPs = []
     for i in size_ratios:
-        feedstock.F_mass = i * default_feedstock_flowrate
+        feedstock.F_mass = i * baseline_feedstock_flowrate
         sys.simulate()
         if i==1:
             base_MSP = get_MSP()
             print(f'FCI over AOC is {tea.FCI/tea.AOC}.')
         size_MSPs.append(get_MSP())
     df = pd.DataFrame({
+        'size': [2205*i for i in size_ratios],
         'size_ratio': size_ratios,
-        'MSP_ratios': [i/base_MSP for i in size_MSPs],
-        'sizes': [2205*i for i in size_ratios],
         'MSP': size_MSPs,
+        'MSP_ratios': [i/base_MSP for i in size_MSPs],
         })
     return df
 
@@ -154,13 +154,13 @@ df = evaluate_across_size_ratios()
 df.to_clipboard()
 # FCI over AOC is 4.374748210931889.
 
-default_cornstover_price = 0.05158816935126135
-feedstock.price = default_cornstover_price * 0.1
+baseline_cornstover_price = 0.05158816935126135
+feedstock.price = baseline_cornstover_price * 0.1
 df_lowerOPEX = evaluate_across_size_ratios()
 df_lowerOPEX.to_clipboard()
 # FCI over AOC is 8.748089645734671.
 
-feedstock.price = default_cornstover_price * 10
+feedstock.price = baseline_cornstover_price * 10
 df_higherOPEX = evaluate_across_size_ratios()
 df_higherOPEX.to_clipboard()
 # FCI over AOC is 0.7292224234141249.
@@ -261,7 +261,7 @@ print(f'Amortized price is {get_amortized_price()}.')
 # To see the impact of income tax on MSP and amortized price
 # =============================================================================
 
-tea.income_tax = default_kwargs['income_tax']
+tea.income_tax = baseline_kwargs['income_tax']
 print(f'\nWhen income tax is {tea.income_tax}:')
 print(f'Amortization MSP is {get_MSP()}.')
 print(f'Amortized price is {get_amortized_price()/(1-tea.income_tax)}.')
@@ -280,7 +280,7 @@ interest = 0.1
 
 reset_tea()
 tea.income_tax = 0.35
-print(f'\nWhen income tax is {tea.income_tax}:')
+print(f'\nWhen income tax is {tea.income_tax}, interest rate is {interest}:')
 
 finance_kwargs = {
     'finance_fraction': 1,
@@ -306,7 +306,7 @@ all_equity_table.to_clipboard()
 
 reset_tea()
 tea.income_tax = 0
-print(f'\nWhen income tax is {tea.income_tax}:')
+print(f'\nWhen income tax is {tea.income_tax}, interest rate is {interest}:')
 
 for k, v in finance_kwargs.items(): setattr(tea, k, v)
 print_financial_results()
@@ -316,14 +316,14 @@ print_financial_results()
 
 interest = finance_kwargs['finance_interest'] = IRR_kwargs['IRR'] = 0.2
 tea.income_tax = 0.35
-print(f'\nWhen income tax is {tea.income_tax}:')
+print(f'\nWhen income tax is {tea.income_tax}, interest rate is {interest}:')
 for k, v in finance_kwargs.items(): setattr(tea, k, v)
 print_financial_results()
 for k, v in IRR_kwargs.items(): setattr(tea, k, v)
 print_financial_results()
 
 tea.income_tax = 0
-print(f'\nWhen income tax is {tea.income_tax}:')
+print(f'\nWhen income tax is {tea.income_tax}, interest rate is {interest}:')
 for k, v in finance_kwargs.items(): setattr(tea, k, v)
 print_financial_results()
 for k, v in IRR_kwargs.items(): setattr(tea, k, v)
@@ -348,7 +348,7 @@ incentive_tea.product = product
 
 def print_incentive_tea(tea=incentive_tea):
     print(f'MSP with {tea.incentive_mechanism} of ${tea.unit_incentive}/kg is {get_MSP(tea)}.')
-#%%
+
 # No incentives
 print_incentive_tea()
 no_incentive_table = incentive_tea.get_cashflow_table()

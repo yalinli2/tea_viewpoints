@@ -7,6 +7,8 @@ Created on Sat Jan  4 11:51:23 2025
 
 '''
 Modular Encapsulated Two-stage Anaerobic Biological (METAB)
+
+DECIDED TO EXCLUDE FROM ANALYSIS
 '''
 
 # =============================================================================
@@ -43,9 +45,8 @@ def get_tax(tea=tea):
     tax = get_MSP(tea)*sum(table['Tax [MM$]'])/sum(get_quantity()/tea.sales*table['Sales [MM$]'])
     return tax
 
-default_kwargs = {
+baseline_kwargs = {
     '_years': 30,
-    '_duration': (tea._start, tea._start+30),
     'income_tax': 0,
     'finance_fraction': 0,
     'IRR': 0.05,
@@ -54,11 +55,13 @@ default_kwargs = {
     }
 
 def reset_tea(tea=tea):
-    for k, v in default_kwargs.items(): setattr(tea, k, v)
-    print(f'\nDefault MSP is {get_MSP()}.')
+    for k, v in baseline_kwargs.items(): setattr(tea, k, v)
+    global baseline_MSP
+    baseline_MSP = get_MSP(tea)
+    print(f'\nBaseline MSP is {baseline_MSP}.')
 
 reset_tea()
-# Default MSP is 9.145709189106421.
+# Baseline MSP is 9.145709189106421.
 
 #%%
 
