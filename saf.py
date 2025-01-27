@@ -6,7 +6,7 @@ Created on Sat Jan  4 11:50:57 2025
 """
 
 '''
-Sustainable Avaiation Fuel from Food Waste (SAF)
+Sustainable Aviation Fuel from Food Waste (SAF)
 '''
 
 # =============================================================================
