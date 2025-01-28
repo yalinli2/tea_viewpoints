@@ -15,6 +15,7 @@ from qsdsan.utils import time_printer
 
 folder = os.path.join(os.path.dirname(__file__), 'results')
 
+
 #%%
 
 cs.load()
@@ -118,6 +119,7 @@ def add_parameters(model, wide=True):
     def set_fermentation_time(fermentation_time):
         R303.tau_cofermentation = fermentation_time
 
+
 #%%
 
 # Set up model
@@ -150,7 +152,7 @@ def evaluate_sample_size(model, prefix, sizes, methods=('R', 'L')): # random, La
             run(model, notify=100)
             affix = f'{method}_{n_sample}'
             model.table.to_csv(os.path.join(folder, f'{prefix}_{affix}.csv'))
-            columns.append(prefix.split('_')[-1][0]+'_'+affix)
+            columns.append(prefix.split('_')[-1]+'_'+affix)
             MSPs.append(model.table[model.table.columns[-1]].copy())
             rho, p = model.spearman_r(filter='omit nan')
             rhos.append(rho[rho.columns[-1]].copy())
@@ -159,18 +161,6 @@ def evaluate_sample_size(model, prefix, sizes, methods=('R', 'L')): # random, La
 
 evaluate_sample_size(cs_model_wide, prefix='cs_model_wide', sizes=sample_sizes)
 evaluate_sample_size(cs_model_narrow, prefix='cs_model_narrow', sizes=sample_sizes)
-
-df_MSP = pd.DataFrame(index=range(sample_sizes[-1]), columns=columns)
-for col, MSP in zip(columns, MSPs): df_MSP[col] = MSP
-df_MSP.to_csv(os.path.join('summary_MSP.csv'))
-
-df_rho = pd.DataFrame(index=rhos[0].index, columns=columns)
-for col, rho in zip(columns, rhos): df_rho[col] = rho
-df_rho.to_csv(os.path.join('summary_rho.csv'))
-
-df_p = pd.DataFrame(index=ps[0].index, columns=columns)
-for col, p in zip(columns, ps): df_p[col] = p
-df_p.to_csv(os.path.join('summary_p.csv'))
 
 
 #%%
@@ -186,6 +176,9 @@ cs_model_wide_lean.parameters = [
 
 evaluate_sample_size(cs_model_wide_lean, prefix='cs_model_wide_lean', sizes=[2000])
 
+
+#%%
+
 # Models with only some of the more important parameters
 cs_model_wide_lean2 = Model(cs_sys, metrics=metrics)
 cs_model_wide_lean2.parameters = [
@@ -197,12 +190,27 @@ cs_model_wide_lean2.parameters = [
 evaluate_sample_size(cs_model_wide_lean2, prefix='cs_model_wide_lean2', sizes=[2000])
 
 
-# %%
+#%%
+
+df_MSP = pd.DataFrame(index=range(sample_sizes[-1]), columns=columns)
+for col, MSP in zip(columns, MSPs): df_MSP[col] = MSP
+df_MSP.to_csv(os.path.join(folder, 'summary_MSP.csv'))
+
+df_rho = pd.DataFrame(index=rhos[0].index, columns=columns)
+for col, rho in zip(columns, rhos): df_rho[col] = rho
+df_rho.to_csv(os.path.join(folder, 'summary_rho.csv'))
+
+df_p = pd.DataFrame(index=ps[0].index, columns=columns)
+for col, p in zip(columns, ps): df_p[col] = p
+df_p.to_csv(os.path.join(folder, 'summary_p.csv'))
+
+
+#%%
 
 # Save as a reference, read exported results
-model = cs_model_wide_lean2.copy()
-df = pd.read_csv(os.path.join(folder, 'cs_model_wide_lean2_L_2000.csv'), header=[0, 1], index_col=0)
-model.table = df
-rho, p = model.spearman_r(filter='omit nan')
-rho.to_clipboard()
-p.to_clipboard()
+# model = cs_model_wide_lean2.copy()
+# df = pd.read_csv(os.path.join(folder, 'cs_model_wide_lean2_L_2000.csv'), header=[0, 1], index_col=0)
+# model.table = df
+# rho, p = model.spearman_r(filter='omit nan')
+# rho.to_clipboard()
+# p.to_clipboard()
