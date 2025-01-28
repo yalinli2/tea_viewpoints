@@ -147,7 +147,7 @@ def evaluate_sample_size(model, prefix, sizes, methods=('R', 'L')): # random, La
     for n_sample in sizes:
         for method in methods:
             samples = model.sample(N=n_sample, rule=method, seed=328)
-            samples[0] = model.get_baseline_sample().values # make sure the first sample is the baseline
+            samples[0] = samples[-1] = model.get_baseline_sample().values # make sure the first sample is the baseline
             model.load_samples(samples)
             run(model, notify=100)
             affix = f'{method}_{n_sample}'
@@ -195,6 +195,12 @@ evaluate_sample_size(cs_model_wide_lean2, prefix='cs_model_wide_lean2', sizes=[2
 df_MSP = pd.DataFrame(index=range(sample_sizes[-1]), columns=columns)
 for col, MSP in zip(columns, MSPs): df_MSP[col] = MSP
 df_MSP.to_csv(os.path.join(folder, 'summary_MSP.csv'))
+
+# To sort values
+MSPs_sorted = [i.sort_values().reset_index(drop=True) for i in MSPs]
+df_MSP_sorted = pd.DataFrame(index=range(sample_sizes[-1]), columns=columns)
+for col, MSP in zip(columns, MSPs_sorted): df_MSP_sorted[col] = MSP
+df_MSP_sorted.to_csv(os.path.join(folder, 'summary_MSP_sorted.csv'))
 
 df_rho = pd.DataFrame(index=rhos[0].index, columns=columns)
 for col, rho in zip(columns, rhos): df_rho[col] = rho
